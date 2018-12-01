@@ -5,6 +5,8 @@
 #include <vector>
 #include <iostream>
 #include "cnf-sat-vc.hpp"
+#include "approx_vc.hpp"
+
 
 std::vector< std::pair<int,int> > parse(std::string s) {
     std::pair<int, int> edge;
@@ -12,7 +14,7 @@ std::vector< std::pair<int,int> > parse(std::string s) {
     
     // using regex
     try {
-        std::regex re("-?[0-9]+"); //match consectuive numbers
+        std::regex re("-?[0-9]+"); //match consectuive numbers, matches lazily
         std::sregex_iterator next(s.begin(), s.end(), re);
         std::sregex_iterator end;
         while (next != end) {
@@ -37,6 +39,16 @@ std::vector< std::pair<int,int> > parse(std::string s) {
 
     return result;
 }
+
+
+void cnf_sat_vc(int vertices, std::vector< std::pair<int,int> > edges) {
+    VertexCover v_cover = VertexCover(vertices);
+    v_cover.add_edges(edges);
+    v_cover.find_minimum();
+
+    return;
+}
+
 
 int main() {
     char cmd;
@@ -66,21 +78,15 @@ int main() {
             case 'E': case 'e':
                 std::cin >> edges_input;
                 // std::cout << "E " << edges_input << std::endl;
-                v_cover->add_edges( parse(edges_input) );
-                v_cover->find_minimum();
+
+                cnf_sat_vc(vertices, parse(edges_input));
+                approx_vc_1(vertices, parse(edges_input));
+                approx_vc_2(vertices, parse(edges_input));
 
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
                 break;
-
-            // case 'S': case 's':
-            //     std::cin >> start_vertex >> end_vertex;
-            //     v_cover->print_shortest_path(start_vertex, end_vertex);
-            //     std::cin.clear();
-            //     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-            //     break;
 
             default:
                 std::cin.clear();
