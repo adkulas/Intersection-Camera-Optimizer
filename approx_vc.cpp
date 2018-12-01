@@ -82,13 +82,15 @@ void approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
         }
 
         // remove edges incident to vertex
-        for (int i=0; i < graph.size(); i++) { // reset column to 0
-            graph[i][vertex] = 0;
-            graph[vertex][i] = 0;
+        for (int i=0; i < graph.size(); i++) {
+            graph[i][vertex] = 0; // set column to 0
+            graph[vertex][i] = 0; // set row to 0
         }
 
         // add vertex to cover
         v_cover.push_back(vertex);
+        
+        // debug messages
         std::clog << "Adding vertex: " << vertex << std::endl;
         std::clog << "Current Graph:" << std::endl;
         for (auto& r : graph) {
@@ -114,9 +116,61 @@ void approx_vc_2(int v, std::vector< std::pair<int,int> > edges) {
         return;
     }
 
-    std::vector< std::vector<int> > graph;
-    graph = create_graph_adj_list(v, edges);
-    std::cout << "APPROX-VC-2: " << std::endl;
+    std::vector<int> v_cover;
+    std::vector< std::vector<int> > graph = create_graph_adj_matrix(v, edges);
+
+    while(true) {
+        
+        // find an edge E = <v1, v2>
+        int v1;
+        int v2;
+        bool found_flag = false;
+        for (int r=0; r < v; r++) {
+            for (int c=0; c < v; c++) {
+                if (graph[r][c] == 1) {
+                    v1 = r;
+                    v2 = c;
+                    found_flag = true;
+                    break;
+                } 
+            }
+            if (found_flag) {break;} // exit first for loop
+        }
+    
+        // exit while loop if no edges remain
+        if (!found_flag) {break;}
+
+        // add vertices to vertex cover
+        v_cover.push_back(v1);
+        v_cover.push_back(v2);
+
+        // remove edges incident to vertices
+        for (int i=0; i < graph.size(); i++) {
+            graph[v1][i] = 0; // set row to 0
+            graph[v2][i] = 0; // set row to 0       
+            graph[i][v1] = 0; // set column to 0
+            graph[i][v2] = 0; // set column to 0     
+
+        }
+
+        // debug messages
+        std::clog << "Adding vertex: " << v1 << " and " << v2 << std::endl;
+        std::clog << "Current Graph:" << std::endl;
+        for (auto& r : graph) {
+            for (auto& c : r) {
+                std::clog << c << " ";
+            }
+            std::clog << std::endl;
+        }
+    }
+
+    std::sort(v_cover.begin(), v_cover.end());
+
+    std::cout << "APPROX-VC-2: ";
+    for (auto& v : v_cover) {
+        std::cout << v << " ";
+    } 
+    std::cout << std::endl;
 
     return;
 }
