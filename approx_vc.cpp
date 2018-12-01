@@ -1,9 +1,3 @@
-/*
-The code used for breadth first search and shortest path
-is a modified version retrieved from:
-https://www.geeksforgeeks.org/shortest-path-unweighted-graph/
-*/
-
 #include <iostream>
 #include <vector>
 #include <list>
@@ -21,7 +15,7 @@ bool check_valid_input(int v, std::vector< std::pair<int,int> > edges) {
         //     std::cerr << "Error:  Cannot add edge from vertex to iteself"
         //               << std::endl;
         //     return false;
-        // }  
+        // }
     }
     return true;
 }
