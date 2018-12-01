@@ -186,6 +186,7 @@ void VertexCover::find_minimum() {
 
     //     // If UNSAT and result[k+1] are SAT, the minimum is found
     //     if (results[mid] == 0 && results[mid+1] == 1 && mid != vertices) {
+    //         std::cout << "CNF-SAT-VC: ";
     //         print_vector(result_paths[mid+1]);
     //         return;
     //     }
@@ -211,6 +212,7 @@ void VertexCover::find_minimum() {
         std::clog << " Result: " << results[i] << " Duration=" << diff.count() << std::endl;
         if (results[i] and !results[i-1]) {
             result_paths[i] = get_path(solver, i);
+            std::cout << "CNF-SAT-VC: ";
             print_vector(result_paths[i]);
             return;
         }

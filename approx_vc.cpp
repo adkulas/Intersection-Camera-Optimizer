@@ -55,12 +55,6 @@ void approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
     std::vector<int> v_cover;
     std::vector< std::vector<int> > graph = create_graph_adj_matrix(v, edges);
 
-    for (auto r : graph) {
-        for (auto c : r) {
-            std::cout << c << " ";
-        }
-        std::cout << std::endl;
-    }
     while(true) {
         // pick highest degree vertex
         int vertex = -1;
@@ -91,14 +85,14 @@ void approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
         v_cover.push_back(vertex);
         
         // debug messages
-        std::clog << "Adding vertex: " << vertex << std::endl;
-        std::clog << "Current Graph:" << std::endl;
-        for (auto& r : graph) {
-            for (auto& c : r) {
-                std::clog << c << " ";
-            }
-            std::clog << std::endl;
-        }
+        // std::clog << "Adding vertex: " << vertex << std::endl;
+        // std::clog << "Current Graph:" << std::endl;
+        // for (auto& r : graph) {
+        //     for (auto& c : r) {
+        //         std::clog << c << " ";
+        //     }
+        //     std::clog << std::endl;
+        // }
     }
     std::sort(v_cover.begin(), v_cover.end());
 
@@ -154,14 +148,14 @@ void approx_vc_2(int v, std::vector< std::pair<int,int> > edges) {
         }
 
         // debug messages
-        std::clog << "Adding vertex: " << v1 << " and " << v2 << std::endl;
-        std::clog << "Current Graph:" << std::endl;
-        for (auto& r : graph) {
-            for (auto& c : r) {
-                std::clog << c << " ";
-            }
-            std::clog << std::endl;
-        }
+        // std::clog << "Adding vertex: " << v1 << " and " << v2 << std::endl;
+        // std::clog << "Current Graph:" << std::endl;
+        // for (auto& r : graph) {
+        //     for (auto& c : r) {
+        //         std::clog << c << " ";
+        //     }
+        //     std::clog << std::endl;
+        // }
     }
 
     std::sort(v_cover.begin(), v_cover.end());
