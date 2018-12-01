@@ -1,0 +1,14 @@
+--- # Personal information
+- student1:   
+    first: Adam
+    last: Kulas
+    student: 20302000
+    watiam: akulas
+    email: akulas@uwaterloo.ca
+- student2: 
+    first: Simon
+    last: Winkler
+    student: 00000000
+    watiam: s3winkle
+    email: simon.winkler@uwaterloo.ca
+...
