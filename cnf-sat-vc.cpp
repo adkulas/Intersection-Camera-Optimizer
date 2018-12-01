@@ -3,7 +3,7 @@
 #include <climits>
 #include <algorithm>
 #include <chrono>
-#include "a4-vertexcover.hpp"
+#include "cnf-sat-vc.hpp"
 #include <minisat/core/SolverTypes.h>
 #include <minisat/core/Solver.h>
 
@@ -163,40 +163,40 @@ void VertexCover::find_minimum() {
     std::vector<int> result_paths[vertices];
     std::fill_n(results, vertices, -1);
 
-    while (low <= high) {
-        mid = (high+low)/2;
+    // while (low <= high) {
+    //     mid = (high+low)/2;
 
-        std::clog << "Trying K=" << mid;
-        Minisat::Solver solver;
-        auto start = std::chrono::system_clock::now();
-        results[mid] = solve(solver, mid);
-        auto end = std::chrono::system_clock::now();
-        std::chrono::duration<double> diff = end-start;
-        std::clog << " Result: " << results[mid] << " Duration=" << diff.count() << std::endl;
+    //     std::clog << "Trying K=" << mid;
+    //     Minisat::Solver solver;
+    //     auto start = std::chrono::system_clock::now();
+    //     results[mid] = solve(solver, mid);
+    //     auto end = std::chrono::system_clock::now();
+    //     std::chrono::duration<double> diff = end-start;
+    //     std::clog << " Result: " << results[mid] << " Duration=" << diff.count() << std::endl;
 
-        if (results[mid]) {
-            result_paths[mid] = get_path(solver, mid);
-        }
+    //     if (results[mid]) {
+    //         result_paths[mid] = get_path(solver, mid);
+    //     }
           
-        // If SAT and result[k-1] are UNSAT, the minimum is found
-        if (results[mid] == 1 && results[mid-1] == 0 && mid != 0) {
-            print_vector(result_paths[mid]);
-            return;
-        }
+    //     // If SAT and result[k-1] are UNSAT, the minimum is found
+    //     if (results[mid] == 1 && results[mid-1] == 0 && mid != 0) {
+    //         print_vector(result_paths[mid]);
+    //         return;
+    //     }
 
-        // If UNSAT and result[k+1] are SAT, the minimum is found
-        if (results[mid] == 0 && results[mid+1] == 1 && mid != vertices) {
-            print_vector(result_paths[mid+1]);
-            return;
-        }
+    //     // If UNSAT and result[k+1] are SAT, the minimum is found
+    //     if (results[mid] == 0 && results[mid+1] == 1 && mid != vertices) {
+    //         print_vector(result_paths[mid+1]);
+    //         return;
+    //     }
         
-        if (results[mid]) {
-            high = mid - 1;
-        } 
-        else {
-            low = mid + 1;
-        }
-    }
+    //     if (results[mid]) {
+    //         high = mid - 1;
+    //     } 
+    //     else {
+    //         low = mid + 1;
+    //     }
+    // }
 
     // Linear Search
     std::fill_n(results, vertices, -1);
