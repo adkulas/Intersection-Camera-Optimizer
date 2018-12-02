@@ -7,7 +7,7 @@ To build the project use the commands
 mkdir build && cd build && cmake ../ && make
 ```
 
-to generate various graph inputs run the python script
+to generate various graph inputs run the python script. 
 From project root:
 ```bash
 cd inputs && ./gen_inputs.py
