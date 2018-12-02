@@ -7,6 +7,8 @@
 #include <minisat/core/SolverTypes.h>
 #include <minisat/core/Solver.h>
 
+bool LOGGING_EN = true;
+
 
 void print_vector(std::vector<int> result_paths) {
     bool first = true;
@@ -129,7 +131,9 @@ bool VertexCover::solve(Minisat::Solver& solver, int k) {
     add_clause_vertex_only_once(solver, k);
     add_clause_one_per_cover_pos(solver, k);
     add_clause_every_edge_covered(solver, k);
-    std::clog << " Num Clauses=" << solver.nClauses();
+    if (LOGGING_EN) {
+        std::clog << " Num_Clauses=" << solver.nClauses();
+    }
 
     auto sat = solver.solve();
     
@@ -188,14 +192,19 @@ int VertexCover::lin_search_vcover() {
     for (int i=0; i <vertices; i++) {
         Minisat::Solver solver;
         
-        std::clog << "Trying K=" << i;
+        if (LOGGING_EN) {
+            std::clog << "Trying K=" << i;   
+        }
         auto start = std::chrono::system_clock::now(); // start measuring time
         
         results[i] = solve(solver, i);
         
+        
         auto end = std::chrono::system_clock::now();   // stop measuring time
         std::chrono::duration<double> diff = end-start;
-        std::clog << " Result: " << results[i] << " Duration=" << diff.count() << std::endl;
+        if (LOGGING_EN) {    
+            std::clog << " Result: " << results[i] << " Duration=" << diff.count() << std::endl;
+        }
         
         if (results[i] and !results[i-1]) {
             result_paths[i] = get_path(solver, i);
@@ -235,14 +244,18 @@ int VertexCover::bin_search_vcover() {
         mid = (high+low)/2;
         Minisat::Solver solver;
 
-        std::clog << "Trying K=" << mid;
+        if (LOGGING_EN) {
+            std::clog << "Trying K=" << mid;
+        }
         auto start = std::chrono::system_clock::now();  // start measuring time
 
         results[mid] = solve(solver, mid);
 
         auto end = std::chrono::system_clock::now();    // stop measuring time
         std::chrono::duration<double> diff = end-start;
-        std::clog << " Result: " << results[mid] << " Duration=" << diff.count() << std::endl;
+        if (LOGGING_EN) {
+            std::clog << " Result: " << results[mid] << " Duration=" << diff.count() << std::endl;
+        }
 
         if (results[mid]) {
             result_paths[mid] = get_path(solver, mid);
