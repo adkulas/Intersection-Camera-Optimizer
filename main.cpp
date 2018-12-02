@@ -3,6 +3,7 @@
 #include <minisat/core/Solver.h>
 #include <regex>
 #include <vector>
+#include <list>
 #include <iostream>
 #include <pthread.h>
 #include "cnf-sat-vc.hpp"
@@ -50,9 +51,9 @@ int cnf_sat_vc(int vertices, std::vector< std::pair<int,int> > edges) {
 }
 
 
-void IO_handler() {
+void* IO_handler(void* args) {
     char cmd;
-    int vertices;
+    int vertices = 0;
     std::string edges_input;
     std::vector< std::pair<int,int> > parsed_edges;
 
@@ -91,22 +92,23 @@ void IO_handler() {
                 std::cerr << "Error: command not recognized" << std::endl;
         }
     }
-    return;
+    return NULL;
 }
 
-void* print_xs (void* unused)
-{
-  while (1) 
-    fputc ('x', stderr);
-  return NULL;
-}
+struct job {
+  int vertices;
+  std::string edges;
+};
+
+pthread_mutex_t job_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+std::list<job> job_queue;
 
 int main() {
     
     pthread_t thread_id;
-    pthread_create (&thread_id, NULL, &print_xs, NULL);
+    pthread_create (&thread_id, NULL, &IO_handler, NULL);
     // pthread_create (&thread2_id, NULL, &dequeue_job, NULL);
-    std::cout << "start IO..." << std::endl;
-    IO_handler();
+    std::cout << "waiting..." << std::endl;
+    pthread_join (thread_id, NULL);
     return 0;
 }
