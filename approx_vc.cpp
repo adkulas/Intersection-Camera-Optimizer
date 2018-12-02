@@ -12,11 +12,11 @@ bool check_valid_input(int v, std::vector< std::pair<int,int> > edges) {
                       << std::endl;
             return false;
         }
-        // if (e.first == e.second) {
-        //     std::cerr << "Error:  Cannot add edge from vertex to iteself"
-        //               << std::endl;
-        //     return false;
-        // }
+        if (e.first == e.second) {
+            std::cerr << "Error:  Cannot add edge from vertex to itself"
+                      << std::endl;
+            return false;
+        }
     }
     return true;
 }
@@ -47,9 +47,14 @@ std::vector< std::vector<int> > create_graph_adj_matrix(int v, std::vector< std:
     return graph;
 }
 
-void approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
+int approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
     if (!check_valid_input(v, edges)) {
-        return;
+        return 1;
+    }
+
+    if (edges.empty()) {
+        std::cout << "APPROX-VC-1: " << std::endl;
+        return 0;
     }
 
     std::vector<int> v_cover;
@@ -99,12 +104,17 @@ void approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
     std::cout << "APPROX-VC-1: ";
     print_vector(v_cover);
 
-    return;
+    return 0;
 }
 
-void approx_vc_2(int v, std::vector< std::pair<int,int> > edges) {
+int approx_vc_2(int v, std::vector< std::pair<int,int> > edges) {
     if (!check_valid_input(v, edges)) {
-        return;
+        return 1;
+    }
+
+    if (edges.empty()) {
+        std::cout << "APPROX-VC-2: " << std::endl;
+        return 0;
     }
 
     std::vector<int> v_cover;
@@ -160,7 +170,7 @@ void approx_vc_2(int v, std::vector< std::pair<int,int> > edges) {
     std::cout << "APPROX-VC-2: ";
     print_vector(v_cover);
 
-    return;
+    return 0;
 }
 
 

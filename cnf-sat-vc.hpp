@@ -22,12 +22,13 @@ private:
     std::vector<int> get_path(Minisat::Solver& solver, int k);
 
 public:
-    VertexCover ( int v = 0 );
+    VertexCover ( int v, std::vector< std::pair<int,int> > edges );
     
     // Accessors
     int get_vertices() const;
     
     // Mutators
     void add_edges(std::vector< std::pair<int,int> > edges);
-    void find_minimum();
+    int bin_search_vcover();
+    int lin_search_vcover();
 };

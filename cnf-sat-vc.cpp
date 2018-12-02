@@ -23,8 +23,8 @@ void print_vector(std::vector<int> result_paths) {
 
 }
 // Constructor
-VertexCover::VertexCover( int v ):
-    vertices(v) {/*empty constructor*/}
+VertexCover::VertexCover( int v, std::vector< std::pair<int,int> > e):
+    vertices(v), edges(e) {/*empty constructor*/}
 
 
 // Private
@@ -43,8 +43,14 @@ bool VertexCover::check_valid_input(std::vector< std::pair<int,int> > edges) {
             std::cerr << "Error: Attempted to add edge to vertex that does not exist"
                       << std::endl;
             return false;
-        } 
+        }
+        if (e.first == e.second) {
+            std::cerr << "Error:  Cannot add edge from vertex to itself"
+                      << std::endl;
+            return false;
+        }
     }
+    
     return true;
 }
 
@@ -160,10 +166,57 @@ void VertexCover::add_edges(std::vector< std::pair<int,int> > e) {
 }
 
 
-void VertexCover::find_minimum() {
+int VertexCover::lin_search_vcover() {
+    if (!check_valid_input(edges)) {
+        return 1;
+    }
+   
     if (edges.empty()) {
-        std::cerr << "Error: No Edges Entered to Graph" << std::endl;
-        return;
+        std::cout << "CNF-SAT-VC: " << std::endl;
+        return 0;
+    }
+    
+    // -----------------------------------
+    // Finds the minimum vertex cover and prints path
+    // Uses Linear search to find minimum
+    // -----------------------------------
+        
+    int results[vertices];  //0 is UNSAT, 1 is SAT, -1 is undefined where index is k or vertex cover length
+    std::vector<int> result_paths[vertices];
+    std::fill_n(results, vertices, -1);
+
+    for (int i=0; i <vertices; i++) {
+        Minisat::Solver solver;
+        
+        std::clog << "Trying K=" << i;
+        auto start = std::chrono::system_clock::now(); // start measuring time
+        
+        results[i] = solve(solver, i);
+        
+        auto end = std::chrono::system_clock::now();   // stop measuring time
+        std::chrono::duration<double> diff = end-start;
+        std::clog << " Result: " << results[i] << " Duration=" << diff.count() << std::endl;
+        
+        if (results[i] and !results[i-1]) {
+            result_paths[i] = get_path(solver, i);
+            std::cout << "CNF-SAT-VC: ";
+            print_vector(result_paths[i]);
+            return 0;
+        }
+    }
+
+    std::cerr << "Error: UNSAT" << std::endl;
+    return 1;
+}
+
+int VertexCover::bin_search_vcover() {
+    if (!check_valid_input(edges)) {
+        return 1;
+    }
+
+    if (edges.empty()) {
+        std::cout << "CNF-SAT-VC: " << std::endl;
+        return 0;
     }
     
     // -----------------------------------
@@ -178,61 +231,44 @@ void VertexCover::find_minimum() {
     std::vector<int> result_paths[vertices];
     std::fill_n(results, vertices, -1);
 
-    // while (low <= high) {
-    //     mid = (high+low)/2;
-
-    //     std::clog << "Trying K=" << mid;
-    //     Minisat::Solver solver;
-    //     auto start = std::chrono::system_clock::now();
-    //     results[mid] = solve(solver, mid);
-    //     auto end = std::chrono::system_clock::now();
-    //     std::chrono::duration<double> diff = end-start;
-    //     std::clog << " Result: " << results[mid] << " Duration=" << diff.count() << std::endl;
-
-    //     if (results[mid]) {
-    //         result_paths[mid] = get_path(solver, mid);
-    //     }
-          
-    //     // If SAT and result[k-1] are UNSAT, the minimum is found
-    //     if (results[mid] == 1 && results[mid-1] == 0 && mid != 0) {
-    //         print_vector(result_paths[mid]);
-    //         return;
-    //     }
-
-    //     // If UNSAT and result[k+1] are SAT, the minimum is found
-    //     if (results[mid] == 0 && results[mid+1] == 1 && mid != vertices) {
-    //         std::cout << "CNF-SAT-VC: ";
-    //         print_vector(result_paths[mid+1]);
-    //         return;
-    //     }
-        
-    //     if (results[mid]) {
-    //         high = mid - 1;
-    //     } 
-    //     else {
-    //         low = mid + 1;
-    //     }
-    // }
-
-    // Linear Search
-    std::fill_n(results, vertices, -1);
-
-    for (int i=0; i <vertices; i++) {
+    while (low <= high) {
+        mid = (high+low)/2;
         Minisat::Solver solver;
-        std::clog << "Trying K=" << i;
-        auto start = std::chrono::system_clock::now();
-        results[i] = solve(solver, i);
-        auto end = std::chrono::system_clock::now();
+
+        std::clog << "Trying K=" << mid;
+        auto start = std::chrono::system_clock::now();  // start measuring time
+
+        results[mid] = solve(solver, mid);
+
+        auto end = std::chrono::system_clock::now();    // stop measuring time
         std::chrono::duration<double> diff = end-start;
-        std::clog << " Result: " << results[i] << " Duration=" << diff.count() << std::endl;
-        if (results[i] and !results[i-1]) {
-            result_paths[i] = get_path(solver, i);
+        std::clog << " Result: " << results[mid] << " Duration=" << diff.count() << std::endl;
+
+        if (results[mid]) {
+            result_paths[mid] = get_path(solver, mid);
+        }
+          
+        // If SAT and result[k-1] are UNSAT, the minimum is found
+        if (results[mid] == 1 && results[mid-1] == 0 && mid != 0) {
+            print_vector(result_paths[mid]);
+            return 0;
+        }
+
+        // If UNSAT and result[k+1] are SAT, the minimum is found
+        if (results[mid] == 0 && results[mid+1] == 1 && mid != vertices) {
             std::cout << "CNF-SAT-VC: ";
-            print_vector(result_paths[i]);
-            return;
+            print_vector(result_paths[mid+1]);
+            return 0;
+        }
+        
+        if (results[mid]) {
+            high = mid - 1;
+        } 
+        else {
+            low = mid + 1;
         }
     }
 
     std::cerr << "Error: UNSAT" << std::endl;
-    return;
+    return 1;
 }

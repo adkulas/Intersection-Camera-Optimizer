@@ -41,20 +41,19 @@ std::vector< std::pair<int,int> > parse(std::string s) {
 }
 
 
-void cnf_sat_vc(int vertices, std::vector< std::pair<int,int> > edges) {
-    VertexCover v_cover = VertexCover(vertices);
-    v_cover.add_edges(edges);
-    v_cover.find_minimum();
+int cnf_sat_vc(int vertices, std::vector< std::pair<int,int> > edges) {
+    VertexCover v_cover = VertexCover(vertices, edges);
+    // v_cover.add_edges(edges);
+    v_cover.lin_search_vcover();
 
-    return;
+    return 0;
 }
 
-
-int main() {
+int IO_handeler() {
     char cmd;
     int vertices;
     std::string edges_input;
-    VertexCover* v_cover = new VertexCover(0);
+    std::vector< std::pair<int,int> > parsed_edges;
 
     while(std::cin >> cmd){    
         
@@ -63,12 +62,9 @@ int main() {
             case 'V': case 'v':
                 std::cin >> vertices;
                 // std::cout << "V " << vertices << std::endl;    
-                // Create a new graph
-                if (vertices >= 0) {
-                    delete v_cover;
-                    v_cover = new VertexCover(vertices);
-                } else {
+                if (vertices < 0) {
                     std::cerr << "Error: Incorrect value for vertices entered" << std::endl;
+                    vertices = 0;
                 }
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -78,10 +74,10 @@ int main() {
             case 'E': case 'e':
                 std::cin >> edges_input;
                 // std::cout << "E " << edges_input << std::endl;
-
-                cnf_sat_vc(vertices, parse(edges_input));
-                approx_vc_1(vertices, parse(edges_input));
-                approx_vc_2(vertices, parse(edges_input));
+                parsed_edges = parse(edges_input);
+                cnf_sat_vc(vertices, parsed_edges);
+                approx_vc_1(vertices, parsed_edges);
+                approx_vc_2(vertices, parsed_edges);
 
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -94,6 +90,11 @@ int main() {
                 std::cerr << "Error: command not recognized" << std::endl;
         }
     }
-    delete v_cover;
+    return 0;
+}
+
+
+int main() {
+    IO_handeler();
     return 0;
 }
