@@ -49,7 +49,7 @@ int cnf_sat_vc(int vertices, std::vector< std::pair<int,int> > edges) {
     return 0;
 }
 
-int IO_handeler() {
+int IO_handler() {
     char cmd;
     int vertices;
     std::string edges_input;
@@ -95,6 +95,6 @@ int IO_handeler() {
 
 
 int main() {
-    IO_handeler();
+    IO_handler();
     return 0;
 }
