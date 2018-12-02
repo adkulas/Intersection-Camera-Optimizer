@@ -5,7 +5,7 @@
 #include <minisat/core/SolverTypes.h>
 #include <minisat/core/Solver.h>
 
-inline void print_vector(std::vector<int> result_paths) {for (auto v : result_paths) {std::cout << v << " ";} std::cout << std::endl;}
+void print_vector(std::vector<int> result_paths);
 class VertexCover {
 private:
     int vertices;

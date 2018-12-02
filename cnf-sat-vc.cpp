@@ -7,6 +7,21 @@
 #include <minisat/core/SolverTypes.h>
 #include <minisat/core/Solver.h>
 
+
+void print_vector(std::vector<int> result_paths) {
+    bool first = true;
+    for (auto& v : result_paths) {
+        if (first) {
+            first = false;
+        }
+        else {
+            std::cout << ",";    
+        }
+        std::cout << v;  
+    } 
+    std::cout << std::endl;
+
+}
 // Constructor
 VertexCover::VertexCover( int v ):
     vertices(v) {/*empty constructor*/}

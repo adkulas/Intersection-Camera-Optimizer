@@ -97,10 +97,7 @@ void approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
     std::sort(v_cover.begin(), v_cover.end());
 
     std::cout << "APPROX-VC-1: ";
-    for (auto& v : v_cover) {
-        std::cout << v << " ";
-    } 
-    std::cout << std::endl;
+    print_vector(v_cover);
 
     return;
 }
@@ -161,10 +158,7 @@ void approx_vc_2(int v, std::vector< std::pair<int,int> > edges) {
     std::sort(v_cover.begin(), v_cover.end());
 
     std::cout << "APPROX-VC-2: ";
-    for (auto& v : v_cover) {
-        std::cout << v << " ";
-    } 
-    std::cout << std::endl;
+    print_vector(v_cover);
 
     return;
 }

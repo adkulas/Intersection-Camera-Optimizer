@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include "cnf-sat-vc.hpp"
 
 // helper functions
 std::vector< std::vector<int> > create_graph_adj_list(int v, std::vector< std::pair<int,int> > edges);
