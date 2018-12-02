@@ -4,6 +4,7 @@
 #include <regex>
 #include <vector>
 #include <iostream>
+#include <pthread.h>
 #include "cnf-sat-vc.hpp"
 #include "approx_vc.hpp"
 
@@ -43,13 +44,13 @@ std::vector< std::pair<int,int> > parse(std::string s) {
 
 int cnf_sat_vc(int vertices, std::vector< std::pair<int,int> > edges) {
     VertexCover v_cover = VertexCover(vertices, edges);
-    // v_cover.add_edges(edges);
     v_cover.lin_search_vcover();
 
     return 0;
 }
 
-int IO_handler() {
+
+void IO_handler() {
     char cmd;
     int vertices;
     std::string edges_input;
@@ -90,11 +91,22 @@ int IO_handler() {
                 std::cerr << "Error: command not recognized" << std::endl;
         }
     }
-    return 0;
+    return;
 }
 
+void* print_xs (void* unused)
+{
+  while (1) 
+    fputc ('x', stderr);
+  return NULL;
+}
 
 int main() {
+    
+    pthread_t thread_id;
+    pthread_create (&thread_id, NULL, &print_xs, NULL);
+    // pthread_create (&thread2_id, NULL, &dequeue_job, NULL);
+    std::cout << "start IO..." << std::endl;
     IO_handler();
     return 0;
 }
