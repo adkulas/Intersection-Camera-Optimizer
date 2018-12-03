@@ -116,17 +116,19 @@ void* test_producer(void* args) {
         
         // add to queue
         std::cout << "Adding job: " << count << std::endl;
+        
+        pthread_mutex_lock (&job_queue_mutex);
         job_queue.push_back(new_job);
 
         count ++;
-        usleep(600000);
         // output from result queue
         if (!result_queue.empty()) {
             std::string output = result_queue.front();
             result_queue.pop_front();
             std::cout << "Work Complete - Result: " << output << std::endl;
         }
-
+        pthread_mutex_unlock (&job_queue_mutex);
+        usleep(100000);
     }
 
     return NULL;
@@ -136,6 +138,9 @@ void* test_consumer(void* args) {
     std::cout << "ENTERED CONSUMER FUNC" << std::endl;
     while(true) {
         if (!job_queue.empty()) {
+            
+            pthread_mutex_lock (&job_queue_mutex);
+
             // get job from queue
             struct job* tmp_job = new job;
             tmp_job = job_queue.front(); 
@@ -149,12 +154,14 @@ void* test_consumer(void* args) {
             std::string result = "COMPLETE " + std::to_string(tmp_job->vertices);
             std::cout << "Pushing result for: " << tmp_job->vertices << std::endl;
             result_queue.push_back(result);
-            
             // cleanup
             delete tmp_job;
+
+            sleep(2);
+            pthread_mutex_unlock (&job_queue_mutex);
+            usleep(500000);
+            
         }
-        
-        sleep(1);
     }
 
     return NULL;
