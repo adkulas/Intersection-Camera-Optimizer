@@ -66,11 +66,12 @@ std::vector< std::pair<int,int> > parse(std::string s) {
 }
 
 
-int cnf_sat_vc(int vertices, std::vector< std::pair<int,int> > edges) {
+std::string cnf_sat_vc(int vertices, std::vector< std::pair<int,int> > edges) {
+    std::string result;
     VertexCover v_cover = VertexCover(vertices, edges);
-    v_cover.lin_search_vcover();
+    result = v_cover.lin_search_vcover();
 
-    return 0;
+    return result;
 }
 
 
@@ -101,9 +102,9 @@ void* IO_handler(void* args) {
                 std::cin >> edges_input;
                 // std::cout << "E " << edges_input << std::endl;
                 parsed_edges = parse(edges_input);
-                cnf_sat_vc(vertices, parsed_edges);
-                approx_vc_1(vertices, parsed_edges);
-                approx_vc_2(vertices, parsed_edges);
+                std::cout << "CNF-SAT-VC: " << cnf_sat_vc(vertices, parsed_edges) << std::endl;
+                std::cout << "APPROX-VC-1: " << approx_vc_1(vertices, parsed_edges) << std::endl;
+                std::cout << "APPROX-VC-2: " << approx_vc_2(vertices, parsed_edges) << std::endl;
 
                 struct job* incoming_job;
 
@@ -115,21 +116,21 @@ void* IO_handler(void* args) {
                 job_queue1.push_back(incoming_job);
                 pthread_mutex_unlock (&job_queue1_mutex);
 
-                // // add to queue 2
-                // incoming_job = new job;
-                // incoming_job->vertices = vertices;
-                // incoming_job->edges = parsed_edges;
-                // pthread_mutex_lock (&job_queue2_mutex);
-                // job_queue2.push_back(incoming_job);
-                // pthread_mutex_unlock (&job_queue2_mutex);
+                // add to queue 2
+                incoming_job = new job;
+                incoming_job->vertices = vertices;
+                incoming_job->edges = parsed_edges;
+                pthread_mutex_lock (&job_queue2_mutex);
+                job_queue2.push_back(incoming_job);
+                pthread_mutex_unlock (&job_queue2_mutex);
 
-                // // add to queue 3
-                // incoming_job = new job;
-                // incoming_job->vertices = vertices;
-                // incoming_job->edges = parsed_edges;
-                // pthread_mutex_lock (&job_queue3_mutex);
-                // job_queue3.push_back(incoming_job);
-                // pthread_mutex_unlock (&job_queue3_mutex);
+                // add to queue 3
+                incoming_job = new job;
+                incoming_job->vertices = vertices;
+                incoming_job->edges = parsed_edges;
+                pthread_mutex_lock (&job_queue3_mutex);
+                job_queue3.push_back(incoming_job);
+                pthread_mutex_unlock (&job_queue3_mutex);
 
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -142,23 +143,39 @@ void* IO_handler(void* args) {
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                 std::cerr << "Error: command not recognized" << std::endl;
         }
+    }
 
+    return NULL;
+}
+
+
+void* output_handler(void* args) {
+        
+    while(true) {  
         pthread_mutex_lock (&result_queue1_mutex);
         pthread_mutex_lock (&result_queue2_mutex);
         pthread_mutex_lock (&result_queue3_mutex);
 
-        while(!result_queue1.empty() && !result_queue1.empty() && !result_queue1.empty()) {
-            std::string result = result_queue1.front();
+        // write results to console in required order
+        while(!result_queue1.empty() && !result_queue2.empty() && !result_queue3.empty()) {
+            std::string result;
+            
+            result = result_queue1.front();
             result_queue1.pop_front();
-            std::cout << "CNF-SAT-VC: " << result << std::endl;
-        }
+            std::cout << result << std::endl;
 
+            result = result_queue2.front();
+            result_queue2.pop_front();
+            std::cout << result << std::endl;
+
+            result = result_queue3.front();
+            result_queue3.pop_front();
+            std::cout << result << std::endl;
+        }
         pthread_mutex_unlock (&result_queue1_mutex);
         pthread_mutex_unlock (&result_queue2_mutex);
         pthread_mutex_unlock (&result_queue3_mutex); 
-
     }
- 
 
     return NULL;
 }
@@ -169,7 +186,7 @@ void* calc_cnf_sat_vc(void* args) {
     std::clog << "thread calc cnf started..." << std::endl;
     
     while (true) {
-        struct job* retrieved_job;
+        struct job* retrieved_job = NULL;
         std::string result;
 
         // get job from queue, use mutex for thread safety
@@ -179,20 +196,20 @@ void* calc_cnf_sat_vc(void* args) {
             job_queue1.pop_front();
 
             // compute result
-            cnf_sat_vc(retrieved_job->vertices, retrieved_job->edges);
-            result = "Finished Job: " + std::to_string(retrieved_job->vertices); 
+            result = "CNF-SAT-VC(thd): " + cnf_sat_vc(retrieved_job->vertices, retrieved_job->edges);
 
             //write result to result queue, use mutex for thread safety
             pthread_mutex_lock (&result_queue1_mutex);
             result_queue1.push_back(result);
             pthread_mutex_unlock (&result_queue1_mutex);
             
-            // cleanup memory taken by job
+            
             
         }
         pthread_mutex_unlock (&job_queue1_mutex);
+
+        // cleanup memory taken by job
         delete retrieved_job;
-        retrieved_job = NULL;
     }
 
     return NULL;
@@ -200,11 +217,67 @@ void* calc_cnf_sat_vc(void* args) {
 
 
 void* calc_aprox_vc_1(void* args) {
+        
+    std::clog << "thread calc approx-1 started..." << std::endl;
+    
+    while (true) {
+        struct job* retrieved_job = NULL;
+        std::string result;
+
+        // get job from queue, use mutex for thread safety
+        pthread_mutex_lock (&job_queue2_mutex);
+        if (!job_queue2.empty()) {
+            retrieved_job = job_queue2.front(); 
+            job_queue2.pop_front();
+
+            // compute result
+            result = "APPROX-VC-1(thd): " + approx_vc_1(retrieved_job->vertices, retrieved_job->edges);
+
+            //write result to result queue, use mutex for thread safety
+            pthread_mutex_lock (&result_queue2_mutex);
+            result_queue2.push_back(result);
+            pthread_mutex_unlock (&result_queue2_mutex);  
+        }
+        pthread_mutex_unlock (&job_queue2_mutex);
+        
+        // cleanup memory taken by job
+        delete retrieved_job;
+    }
+
     return NULL;
 }
 
 
 void* calc_approx_vc_2(void* args) {
+        
+    std::clog << "thread calc approx-2 started..." << std::endl;
+    
+    while (true) {
+        struct job* retrieved_job = NULL;
+        std::string result;
+
+        // get job from queue, use mutex for thread safety
+        pthread_mutex_lock (&job_queue3_mutex);
+        if (!job_queue3.empty()) {
+            retrieved_job = job_queue3.front(); 
+            job_queue3.pop_front();
+
+            // compute result
+            result = "APPROX-VC-2(thd): " +approx_vc_2(retrieved_job->vertices, retrieved_job->edges);
+
+            //write result to result queue, use mutex for thread safety
+            pthread_mutex_lock (&result_queue3_mutex);
+            result_queue3.push_back(result);
+            pthread_mutex_unlock (&result_queue3_mutex);
+            
+
+            
+        }
+        pthread_mutex_unlock (&job_queue3_mutex);
+        // cleanup memory taken by job
+        delete retrieved_job;
+    }
+    
     return NULL;
 }
 
@@ -212,31 +285,24 @@ void* calc_approx_vc_2(void* args) {
 int main() {
     
     pthread_t IO_thread;
+    pthread_t out_thread;
     pthread_t cnf_sat_thread;
     pthread_t approx_vc1_thread;
     pthread_t approx_vc2_thread;
+    
 
     pthread_create (&IO_thread, NULL, &IO_handler, NULL);
+    pthread_create (&out_thread, NULL, &output_handler, NULL);
     pthread_create (&cnf_sat_thread, NULL, &calc_cnf_sat_vc, NULL);
     pthread_create (&approx_vc1_thread, NULL, &calc_aprox_vc_1, NULL);
     pthread_create (&approx_vc2_thread, NULL, &calc_approx_vc_2, NULL);
 
     std::cout << "all threads started..." << std::endl;
     pthread_join (IO_thread, NULL);
+    pthread_join (out_thread, NULL);
     pthread_join (cnf_sat_thread, NULL);
     pthread_join (approx_vc1_thread, NULL);
     pthread_join (approx_vc2_thread, NULL);
-
-
-    // pthread_t thd_1;
-    // pthread_t thd_2;
-
-    // pthread_create (&thd_1, NULL, &test_producer, NULL);
-    // pthread_create (&thd_2, NULL, &test_consumer, NULL);
-
-    // std::cout << "waiting..." << std::endl;
-    // pthread_join (thd_1, NULL);
-    // pthread_join (thd_2, NULL);
 
     return 0;
 }
