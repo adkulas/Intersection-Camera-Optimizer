@@ -7,7 +7,7 @@
 #include <minisat/core/SolverTypes.h>
 #include <minisat/core/Solver.h>
 
-bool LOGGING_EN = false;
+bool LOGGING_EN = true;
 
 
 std::string print_vector(std::vector<int> result_paths) {

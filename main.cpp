@@ -1,20 +1,42 @@
 
 #include <minisat/core/SolverTypes.h>
 #include <minisat/core/Solver.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include <regex>
 #include <vector>
 #include <list>
 #include <iostream>
-#include <unistd.h>
-#include <pthread.h>
+
 #include "cnf-sat-vc.hpp"
 #include "approx_vc.hpp"
 
+#define handle_error(msg) \
+        do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+#define handle_error_en(en, msg) \
+        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
 
 struct job {
   int vertices;
   std::vector< std::pair<int,int> > edges;
 };
+
+static void
+pclock(char *msg, clockid_t cid)
+{
+    struct timespec ts;
+
+    printf("%s", msg);
+    if (clock_gettime(cid, &ts) == -1)
+        handle_error("clock_gettime");
+    printf("%4ld.%03ld\n", ts.tv_sec, ts.tv_nsec / 1000000);
+}
 
 // kind of ugly... maybe consider moving into a queue class
 pthread_mutex_t job_queue1_mutex = PTHREAD_MUTEX_INITIALIZER;  //mutex between cnf_sat and IO_handler
@@ -184,7 +206,8 @@ void* output_handler(void* args) {
 void* calc_cnf_sat_vc(void* args) {
     
     std::clog << "thread calc cnf started..." << std::endl;
-    
+    clockid_t clock_id;
+
     while (true) {
         struct job* retrieved_job = NULL;
         std::string result;
@@ -196,7 +219,11 @@ void* calc_cnf_sat_vc(void* args) {
             job_queue1.pop_front();
 
             // compute result
+            pthread_getcpuclockid(pthread_self(), &clock_id);
+            pclock("Subthread CPU time: 1    ", clock_id);
             result = "CNF-SAT-VC(thd): " + cnf_sat_vc(retrieved_job->vertices, retrieved_job->edges);
+            pthread_getcpuclockid(pthread_self(), &clock_id);
+            pclock("Subthread CPU time: 1    ", clock_id);
 
             //write result to result queue, use mutex for thread safety
             pthread_mutex_lock (&result_queue1_mutex);
@@ -289,7 +316,7 @@ int main() {
     pthread_t cnf_sat_thread;
     pthread_t approx_vc1_thread;
     pthread_t approx_vc2_thread;
-    
+    clockid_t clock_id;
 
     pthread_create (&IO_thread, NULL, &IO_handler, NULL);
     pthread_create (&out_thread, NULL, &output_handler, NULL);
