@@ -10,19 +10,19 @@
 bool LOGGING_EN = true;
 
 
-void print_vector(std::vector<int> result_paths) {
+std::string print_vector(std::vector<int> result_paths) {
+    std::string result;
     bool first = true;
     for (auto& v : result_paths) {
         if (first) {
             first = false;
         }
         else {
-            std::cout << ",";    
+            result += ",";
         }
-        std::cout << v;  
-    } 
-    std::cout << std::endl;
-
+        result += std::to_string(v);  
+    }
+    return result;
 }
 // Constructor
 VertexCover::VertexCover( int v, std::vector< std::pair<int,int> > e):
@@ -170,14 +170,13 @@ void VertexCover::add_edges(std::vector< std::pair<int,int> > e) {
 }
 
 
-int VertexCover::lin_search_vcover() {
+std::string VertexCover::lin_search_vcover() {
     if (!check_valid_input(edges)) {
-        return 1;
+        return "";
     }
    
     if (edges.empty()) {
-        std::cout << "CNF-SAT-VC: " << std::endl;
-        return 0;
+        return "";
     }
     
     // -----------------------------------
@@ -208,24 +207,21 @@ int VertexCover::lin_search_vcover() {
         
         if (results[i] and !results[i-1]) {
             result_paths[i] = get_path(solver, i);
-            std::cout << "CNF-SAT-VC: ";
-            print_vector(result_paths[i]);
-            return 0;
+            return print_vector(result_paths[i]);
         }
     }
 
     std::cerr << "Error: UNSAT" << std::endl;
-    return 1;
+    return "";
 }
 
-int VertexCover::bin_search_vcover() {
+std::string VertexCover::bin_search_vcover() {
     if (!check_valid_input(edges)) {
-        return 1;
+        return "";
     }
 
     if (edges.empty()) {
-        std::cout << "CNF-SAT-VC: " << std::endl;
-        return 0;
+        return "";
     }
     
     // -----------------------------------
@@ -263,15 +259,12 @@ int VertexCover::bin_search_vcover() {
           
         // If SAT and result[k-1] are UNSAT, the minimum is found
         if (results[mid] == 1 && results[mid-1] == 0 && mid != 0) {
-            print_vector(result_paths[mid]);
-            return 0;
+            return print_vector(result_paths[mid]);
         }
 
         // If UNSAT and result[k+1] are SAT, the minimum is found
         if (results[mid] == 0 && results[mid+1] == 1 && mid != vertices) {
-            std::cout << "CNF-SAT-VC: ";
-            print_vector(result_paths[mid+1]);
-            return 0;
+            return print_vector(result_paths[mid+1]);
         }
         
         if (results[mid]) {
@@ -283,5 +276,5 @@ int VertexCover::bin_search_vcover() {
     }
 
     std::cerr << "Error: UNSAT" << std::endl;
-    return 1;
+    return "";
 }

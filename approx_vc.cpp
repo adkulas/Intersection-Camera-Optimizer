@@ -47,14 +47,14 @@ std::vector< std::vector<int> > create_graph_adj_matrix(int v, std::vector< std:
     return graph;
 }
 
-int approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
+
+std::string approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
     if (!check_valid_input(v, edges)) {
-        return 1;
+        return "";
     }
 
     if (edges.empty()) {
-        std::cout << "APPROX-VC-1: " << std::endl;
-        return 0;
+        return "";
     }
 
     std::vector<int> v_cover;
@@ -101,20 +101,17 @@ int approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
     }
     std::sort(v_cover.begin(), v_cover.end());
 
-    std::cout << "APPROX-VC-1: ";
-    print_vector(v_cover);
-
-    return 0;
+    return print_vector(v_cover);
 }
 
-int approx_vc_2(int v, std::vector< std::pair<int,int> > edges) {
+
+std::string approx_vc_2(int v, std::vector< std::pair<int,int> > edges) {
     if (!check_valid_input(v, edges)) {
-        return 1;
+        return "";
     }
 
     if (edges.empty()) {
-        std::cout << "APPROX-VC-2: " << std::endl;
-        return 0;
+        return "";
     }
 
     std::vector<int> v_cover;
@@ -167,10 +164,7 @@ int approx_vc_2(int v, std::vector< std::pair<int,int> > edges) {
 
     std::sort(v_cover.begin(), v_cover.end());
 
-    std::cout << "APPROX-VC-2: ";
-    print_vector(v_cover);
-
-    return 0;
+    return print_vector(v_cover);
 }
 
 

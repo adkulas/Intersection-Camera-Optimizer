@@ -5,7 +5,7 @@
 #include <minisat/core/SolverTypes.h>
 #include <minisat/core/Solver.h>
 
-void print_vector(std::vector<int> result_paths);
+std::string print_vector(std::vector<int> result_paths);
 class VertexCover {
 private:
     int vertices;
@@ -29,6 +29,6 @@ public:
     
     // Mutators
     void add_edges(std::vector< std::pair<int,int> > edges);
-    int bin_search_vcover();
-    int lin_search_vcover();
+    std::string bin_search_vcover();
+    std::string lin_search_vcover();
 };
