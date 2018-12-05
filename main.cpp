@@ -12,6 +12,7 @@
 #include <vector>
 #include <list>
 #include <iostream>
+#include <fstream>
 
 #include "cnf-sat-vc.hpp"
 #include "approx_vc.hpp"
@@ -205,6 +206,7 @@ void* calc_cnf_sat_vc(void* args) {
     clockid_t clock_id;
     int job_number = 1;
     bool exit_flag = false;
+    std::ofstream outfile;
 
     while (true) {
         struct job* retrieved_job = NULL;
@@ -228,8 +230,11 @@ void* calc_cnf_sat_vc(void* args) {
             struct timespec ts_end;
             clock_gettime(clock_id, &ts_end);
             long double elapsed_time_us = ((long double)ts_end.tv_sec*1000000 + (long double)ts_end.tv_nsec/1000.0) - ((long double)ts_start.tv_sec*1000000 + (long double)ts_start.tv_nsec/1000.0);
-            std::clog << "CNF-SAT-VC,Job_num," << job_number << "," 
-                      << "time(us)," << elapsed_time_us << std::endl;
+            // std::clog << "CNF-SAT-VC,Job_num," << job_number << "," 
+            //           << "time(us)," << elapsed_time_us << std::endl;
+            outfile.open("Runtimes_CNF-SAT-VC.csv", std::ios_base::app);
+            outfile << "CNF-SAT-VC,Job_num," << job_number << "," 
+                    << "time_us," << elapsed_time_us << std::endl;
 
             //write result to result queue, use mutex for thread safety
             pthread_mutex_lock (&result_queue1_mutex);
