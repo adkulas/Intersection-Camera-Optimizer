@@ -235,6 +235,9 @@ void* calc_cnf_sat_vc(void* args) {
 
         // cleanup memory taken by job
         delete retrieved_job;
+        if(*(bool*)args){
+            std::cout<< "WOW THE FLAG CHANGED";
+        }
     }
 
     return NULL;
@@ -343,14 +346,16 @@ int main() {
     pthread_t cnf_sat_thread;
     pthread_t approx_vc1_thread;
     pthread_t approx_vc2_thread;
+    bool IO_handler_finished_flag = false;
 
-    pthread_create (&IO_thread, NULL, &IO_handler, NULL);
+    pthread_create (&IO_thread, NULL, &IO_handler, &IO_handler_finished_flag);
     pthread_create (&out_thread, NULL, &output_handler, NULL);
-    pthread_create (&cnf_sat_thread, NULL, &calc_cnf_sat_vc, NULL);
+    pthread_create (&cnf_sat_thread, NULL, &calc_cnf_sat_vc, &IO_handler_finished_flag);
     pthread_create (&approx_vc1_thread, NULL, &calc_aprox_vc_1, NULL);
     pthread_create (&approx_vc2_thread, NULL, &calc_approx_vc_2, NULL);
 
     pthread_join (IO_thread, NULL);
+    IO_handler_finished_flag = true;
     pthread_join (out_thread, NULL);
     pthread_join (cnf_sat_thread, NULL);
     pthread_join (approx_vc1_thread, NULL);
