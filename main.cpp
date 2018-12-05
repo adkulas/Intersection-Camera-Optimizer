@@ -156,13 +156,15 @@ void* IO_handler(void* args) {
                 std::cerr << "Error: command not recognized" << std::endl;
         }
     }
-
+    std::cout << "leaving IO handler" << std::endl;
     return NULL;
 }
 
 
 void* output_handler(void* args) {
-        
+    
+    bool exit_flag = false;
+
     while(true) {  
         pthread_mutex_lock (&result_queue1_mutex);
         pthread_mutex_lock (&result_queue2_mutex);
@@ -184,9 +186,15 @@ void* output_handler(void* args) {
             result_queue3.pop_front();
             std::cout << result << std::endl;
         }
+        if (*((bool*)args+1) && result_queue1.empty() && result_queue2.empty() && result_queue3.empty()) {
+            exit_flag = true;
+        }
+
         pthread_mutex_unlock (&result_queue1_mutex);
         pthread_mutex_unlock (&result_queue2_mutex);
-        pthread_mutex_unlock (&result_queue3_mutex); 
+        pthread_mutex_unlock (&result_queue3_mutex);
+
+        if (exit_flag) {break;}
     }
 
     return NULL;
@@ -197,6 +205,7 @@ void* calc_cnf_sat_vc(void* args) {
     
     clockid_t clock_id;
     int job_number = 1;
+    bool exit_flag = false;
 
     while (true) {
         struct job* retrieved_job = NULL;
@@ -231,13 +240,16 @@ void* calc_cnf_sat_vc(void* args) {
             job_number++;
             
         }
+        // exit loop when IO_handler see EOF (flag is set in int main after thread joins)
+        if(*(bool*)args && job_queue1.empty()) {
+            exit_flag = true;
+        }
         pthread_mutex_unlock (&job_queue1_mutex);
+        // std::cout << "{1}(" << *(bool*)args << ", " << *((bool*)args+1) << ")";
 
         // cleanup memory taken by job
         delete retrieved_job;
-        if(*(bool*)args){
-            std::cout<< "WOW THE FLAG CHANGED";
-        }
+        if (exit_flag) {break;}
     }
 
     return NULL;
@@ -248,6 +260,7 @@ void* calc_aprox_vc_1(void* args) {
         
     clockid_t clock_id;
     int job_number = 1;
+    bool exit_flag = false;
     
     while (true) {
         struct job* retrieved_job = NULL;
@@ -281,10 +294,16 @@ void* calc_aprox_vc_1(void* args) {
 
             job_number++;
         }
+        // exit loop when IO_handler see EOF (flag is set in int main after thread joins)
+        if(*(bool*)args && job_queue2.empty()) {
+            exit_flag = true;
+        }
         pthread_mutex_unlock (&job_queue2_mutex);
-        
+        // std::cout << "{2}(" << *(bool*)args << ", " << *((bool*)args+1) << ")";
         // cleanup memory taken by job
         delete retrieved_job;
+        if (exit_flag) {break;}
+
     }
 
     return NULL;
@@ -295,6 +314,7 @@ void* calc_approx_vc_2(void* args) {
         
     clockid_t clock_id;
     int job_number = 1;
+    bool exit_flag = false;
     
     while (true) {
         struct job* retrieved_job = NULL;
@@ -330,9 +350,16 @@ void* calc_approx_vc_2(void* args) {
 
             job_number++;
         }
+        // exit loop when IO_handler see EOF (flag is set in int main after thread joins)
+        if(*(bool*)args && job_queue3.empty()) {
+            exit_flag = true;
+        }
+
         pthread_mutex_unlock (&job_queue3_mutex);
+        // std::cout << "{3}(" << *(bool*)args << ", " << *((bool*)args+1) << ")";
         // cleanup memory taken by job
         delete retrieved_job;
+        if (exit_flag) {break;}
     }
     
     return NULL;
@@ -346,20 +373,26 @@ int main() {
     pthread_t cnf_sat_thread;
     pthread_t approx_vc1_thread;
     pthread_t approx_vc2_thread;
-    bool IO_handler_finished_flag = false;
+    bool finished_flags[2] = {false};
 
-    pthread_create (&IO_thread, NULL, &IO_handler, &IO_handler_finished_flag);
-    pthread_create (&out_thread, NULL, &output_handler, NULL);
-    pthread_create (&cnf_sat_thread, NULL, &calc_cnf_sat_vc, &IO_handler_finished_flag);
-    pthread_create (&approx_vc1_thread, NULL, &calc_aprox_vc_1, NULL);
-    pthread_create (&approx_vc2_thread, NULL, &calc_approx_vc_2, NULL);
+    pthread_create (&IO_thread, NULL, &IO_handler, (void *) finished_flags);
+    pthread_create (&out_thread, NULL, &output_handler, (void *) finished_flags);
+    pthread_create (&cnf_sat_thread, NULL, &calc_cnf_sat_vc, (void *) finished_flags);
+    pthread_create (&approx_vc1_thread, NULL, &calc_aprox_vc_1, (void *) finished_flags);
+    pthread_create (&approx_vc2_thread, NULL, &calc_approx_vc_2, (void *) finished_flags);
 
     pthread_join (IO_thread, NULL);
-    IO_handler_finished_flag = true;
-    pthread_join (out_thread, NULL);
+    finished_flags[0] = true; // flag indicates that EOF was seen at input, signal all threads to finish work and return
+    std::cout << "IO thread returned" << std::endl;
     pthread_join (cnf_sat_thread, NULL);
+    std::cout << "here{1}" << std::endl;
     pthread_join (approx_vc1_thread, NULL);
+    std::cout << "here{2}" << std::endl;
     pthread_join (approx_vc2_thread, NULL);
+    std::cout << "All calc threads returned" << std::endl;
+    finished_flags[1] = true; // flag indicates all jobs processed, signal output writer to finish print results and return
 
+    pthread_join (out_thread, NULL);
+    std::cout << "Everything closed" << std::endl;
     return 0;
 }
