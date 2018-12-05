@@ -27,16 +27,6 @@ struct job {
   std::vector< std::pair<int,int> > edges;
 };
 
-static void
-pclock(char *msg, clockid_t cid)
-{
-    struct timespec ts;
-
-    printf("%s", msg);
-    if (clock_gettime(cid, &ts) == -1)
-        handle_error("clock_gettime");
-    printf("%4ld.%03ld\n", ts.tv_sec, ts.tv_nsec / 1000000);
-}
 
 // kind of ugly... maybe consider moving into a queue class
 pthread_mutex_t job_queue1_mutex = PTHREAD_MUTEX_INITIALIZER;  //mutex between cnf_sat and IO_handler
@@ -124,9 +114,9 @@ void* IO_handler(void* args) {
                 std::cin >> edges_input;
                 // std::cout << "E " << edges_input << std::endl;
                 parsed_edges = parse(edges_input);
-                std::cout << "CNF-SAT-VC: " << cnf_sat_vc(vertices, parsed_edges) << std::endl;
-                std::cout << "APPROX-VC-1: " << approx_vc_1(vertices, parsed_edges) << std::endl;
-                std::cout << "APPROX-VC-2: " << approx_vc_2(vertices, parsed_edges) << std::endl;
+                // std::cout << "CNF-SAT-VC: " << cnf_sat_vc(vertices, parsed_edges) << std::endl;
+                // std::cout << "APPROX-VC-1: " << approx_vc_1(vertices, parsed_edges) << std::endl;
+                // std::cout << "APPROX-VC-2: " << approx_vc_2(vertices, parsed_edges) << std::endl;
 
                 struct job* incoming_job;
 
@@ -205,8 +195,8 @@ void* output_handler(void* args) {
 
 void* calc_cnf_sat_vc(void* args) {
     
-    std::clog << "thread calc cnf started..." << std::endl;
     clockid_t clock_id;
+    int job_number = 1;
 
     while (true) {
         struct job* retrieved_job = NULL;
@@ -218,19 +208,27 @@ void* calc_cnf_sat_vc(void* args) {
             retrieved_job = job_queue1.front(); 
             job_queue1.pop_front();
 
+            // time start
+            pthread_getcpuclockid(pthread_self(), &clock_id);
+            struct timespec ts_start;
+            clock_gettime(clock_id, &ts_start);
+
             // compute result
-            pthread_getcpuclockid(pthread_self(), &clock_id);
-            pclock("Subthread CPU time: 1    ", clock_id);
-            result = "CNF-SAT-VC(thd): " + cnf_sat_vc(retrieved_job->vertices, retrieved_job->edges);
-            pthread_getcpuclockid(pthread_self(), &clock_id);
-            pclock("Subthread CPU time: 1    ", clock_id);
+            result = "CNF-SAT-VC: " + cnf_sat_vc(retrieved_job->vertices, retrieved_job->edges);
+            
+            //time end
+            struct timespec ts_end;
+            clock_gettime(clock_id, &ts_end);
+            long double elapsed_time_us = ((long double)ts_end.tv_sec*1000000 + (long double)ts_end.tv_nsec/1000.0) - ((long double)ts_start.tv_sec*1000000 + (long double)ts_start.tv_nsec/1000.0);
+            std::clog << "CNF-SAT-VC,Job_num," << job_number << "," 
+                      << "time(us)," << elapsed_time_us << std::endl;
 
             //write result to result queue, use mutex for thread safety
             pthread_mutex_lock (&result_queue1_mutex);
             result_queue1.push_back(result);
             pthread_mutex_unlock (&result_queue1_mutex);
             
-            
+            job_number++;
             
         }
         pthread_mutex_unlock (&job_queue1_mutex);
@@ -245,7 +243,8 @@ void* calc_cnf_sat_vc(void* args) {
 
 void* calc_aprox_vc_1(void* args) {
         
-    std::clog << "thread calc approx-1 started..." << std::endl;
+    clockid_t clock_id;
+    int job_number = 1;
     
     while (true) {
         struct job* retrieved_job = NULL;
@@ -257,13 +256,27 @@ void* calc_aprox_vc_1(void* args) {
             retrieved_job = job_queue2.front(); 
             job_queue2.pop_front();
 
+            // time start
+            pthread_getcpuclockid(pthread_self(), &clock_id);
+            struct timespec ts_start;
+            clock_gettime(clock_id, &ts_start);
+
             // compute result
-            result = "APPROX-VC-1(thd): " + approx_vc_1(retrieved_job->vertices, retrieved_job->edges);
+            result = "APPROX-VC-1: " + approx_vc_1(retrieved_job->vertices, retrieved_job->edges);
+
+            //time end
+            struct timespec ts_end;
+            clock_gettime(clock_id, &ts_end);
+            long double elapsed_time_us = ((long double)ts_end.tv_sec*1000000 + (long double)ts_end.tv_nsec/1000.0) - ((long double)ts_start.tv_sec*1000000 + (long double)ts_start.tv_nsec/1000.0);
+            std::clog << "APPROX-VC-1,Job_num," << job_number << "," 
+                      << "time(us)," << elapsed_time_us << std::endl;
 
             //write result to result queue, use mutex for thread safety
             pthread_mutex_lock (&result_queue2_mutex);
             result_queue2.push_back(result);
             pthread_mutex_unlock (&result_queue2_mutex);  
+
+            job_number++;
         }
         pthread_mutex_unlock (&job_queue2_mutex);
         
@@ -277,7 +290,8 @@ void* calc_aprox_vc_1(void* args) {
 
 void* calc_approx_vc_2(void* args) {
         
-    std::clog << "thread calc approx-2 started..." << std::endl;
+    clockid_t clock_id;
+    int job_number = 1;
     
     while (true) {
         struct job* retrieved_job = NULL;
@@ -289,8 +303,21 @@ void* calc_approx_vc_2(void* args) {
             retrieved_job = job_queue3.front(); 
             job_queue3.pop_front();
 
+            // time start
+            pthread_getcpuclockid(pthread_self(), &clock_id);
+            struct timespec ts_start;
+            clock_gettime(clock_id, &ts_start);
+
             // compute result
-            result = "APPROX-VC-2(thd): " +approx_vc_2(retrieved_job->vertices, retrieved_job->edges);
+            result = "APPROX-VC-2: " + approx_vc_2(retrieved_job->vertices, retrieved_job->edges);
+
+            //time end
+            struct timespec ts_end;
+            clock_gettime(clock_id, &ts_end);
+            long double elapsed_time_us = ((long double)ts_end.tv_sec*1000000 + (long double)ts_end.tv_nsec/1000.0) - ((long double)ts_start.tv_sec*1000000 + (long double)ts_start.tv_nsec/1000.0);
+            std::clog << "APPROX-VC-2,Job_num," << job_number << "," 
+                      << "time(us)," << elapsed_time_us << std::endl;
+
 
             //write result to result queue, use mutex for thread safety
             pthread_mutex_lock (&result_queue3_mutex);
@@ -298,7 +325,7 @@ void* calc_approx_vc_2(void* args) {
             pthread_mutex_unlock (&result_queue3_mutex);
             
 
-            
+            job_number++;
         }
         pthread_mutex_unlock (&job_queue3_mutex);
         // cleanup memory taken by job
@@ -316,7 +343,6 @@ int main() {
     pthread_t cnf_sat_thread;
     pthread_t approx_vc1_thread;
     pthread_t approx_vc2_thread;
-    clockid_t clock_id;
 
     pthread_create (&IO_thread, NULL, &IO_handler, NULL);
     pthread_create (&out_thread, NULL, &output_handler, NULL);
@@ -324,7 +350,6 @@ int main() {
     pthread_create (&approx_vc1_thread, NULL, &calc_aprox_vc_1, NULL);
     pthread_create (&approx_vc2_thread, NULL, &calc_approx_vc_2, NULL);
 
-    std::cout << "all threads started..." << std::endl;
     pthread_join (IO_thread, NULL);
     pthread_join (out_thread, NULL);
     pthread_join (cnf_sat_thread, NULL);
