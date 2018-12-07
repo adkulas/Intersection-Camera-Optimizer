@@ -64,7 +64,7 @@ std::string approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
         // pick highest degree vertex
         int vertex = -1;
         int max_degree = 0;
-        for (int r=0; r < graph.size(); r++) {
+        for (unsigned int r=0; r < graph.size(); r++) {
             int v_deg = 0;
             for (auto& n : graph[r])
                 v_deg += n;
@@ -81,7 +81,7 @@ std::string approx_vc_1(int v, std::vector< std::pair<int,int> > edges) {
         }
 
         // remove edges incident to vertex
-        for (int i=0; i < graph.size(); i++) {
+        for (unsigned int i=0; i < graph.size(); i++) {
             graph[i][vertex] = 0; // set column to 0
             graph[vertex][i] = 0; // set row to 0
         }
@@ -143,7 +143,7 @@ std::string approx_vc_2(int v, std::vector< std::pair<int,int> > edges) {
         v_cover.push_back(v2);
 
         // remove edges incident to vertices
-        for (int i=0; i < graph.size(); i++) {
+        for (unsigned int i=0; i < graph.size(); i++) {
             graph[v1][i] = 0; // set row to 0
             graph[v2][i] = 0; // set row to 0       
             graph[i][v1] = 0; // set column to 0
