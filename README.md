@@ -15,7 +15,7 @@ cd inputs && ./gen_inputs.py
 
 To run project with generated inputs:
 ```bash
-cd build && cat ../inputs/inputs.in | ./prj-ece650
+cd build && cat ../inputs/inputs.in | ./prj-ece650 -r 0 -o
 ```
 
 To send errors and logs to file, use:
