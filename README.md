@@ -23,3 +23,9 @@ To send errors and logs to file, use:
 cd build && cat ../inputs/inputs.in | ./prj-ece650 2> log.log 
 ```
 
+Flags for Operation:
+- -o [write performance time results to file]
+- -r value [prepend number to filename to indicate run number]
+- -i [this flag bypasses the sat solver if trying inputs of large v]
+- -l [enables write results to std::clog]
+

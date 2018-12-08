@@ -23,6 +23,10 @@
 #define handle_error_en(en, msg) \
         do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
 
+int RUN_NUM = 0;
+bool OUT_TO_FILE = false;
+bool LOG_EN = false;
+
 struct job {
   int vertices;
   std::vector< std::pair<int,int> > edges;
@@ -205,6 +209,7 @@ void* calc_cnf_sat_vc(void* args) {
     
     clockid_t clock_id;
     int job_number = 1;
+    bool write_header = true;
     bool exit_flag = false;
     std::ofstream outfile;
 
@@ -230,11 +235,23 @@ void* calc_cnf_sat_vc(void* args) {
             struct timespec ts_end;
             clock_gettime(clock_id, &ts_end);
             long double elapsed_time_us = ((long double)ts_end.tv_sec*1000000 + (long double)ts_end.tv_nsec/1000.0) - ((long double)ts_start.tv_sec*1000000 + (long double)ts_start.tv_nsec/1000.0);
-            // std::clog << "CNF-SAT-VC,Job_num," << job_number << "," 
-            //           << "time(us)," << elapsed_time_us << std::endl;
-            outfile.open("Runtimes_CNF-SAT-VC.csv", std::ios_base::app);
-            outfile << "CNF-SAT-VC,Job_num," << job_number << "," 
-                    << "time_us," << elapsed_time_us << std::endl;
+            
+            // output result to terminal if LOG_EN option
+            if (LOG_EN) {
+                std::clog << "CNF-SAT-VC,Job_num," << job_number << "," 
+                      << "time_us," << elapsed_time_us << std::endl;
+            }
+            
+            // write to file
+            if (OUT_TO_FILE) {
+                std::string file_name = std::to_string(RUN_NUM) + "_CNF-SAT-VC.csv";
+                outfile.open(file_name, std::ios_base::app);
+                if (write_header) {
+                    outfile << "job_number,elapsed_time_us" << std::endl; 
+                    write_header = false;
+                }
+                outfile << job_number << "," << elapsed_time_us << std::endl;
+            }
 
             //write result to result queue, use mutex for thread safety
             pthread_mutex_lock (&result_queue1_mutex);
@@ -263,7 +280,9 @@ void* calc_aprox_vc_1(void* args) {
         
     clockid_t clock_id;
     int job_number = 1;
+    bool write_header = true;
     bool exit_flag = false;
+    std::ofstream outfile;
     
     while (true) {
         struct job* retrieved_job = NULL;
@@ -287,8 +306,23 @@ void* calc_aprox_vc_1(void* args) {
             struct timespec ts_end;
             clock_gettime(clock_id, &ts_end);
             long double elapsed_time_us = ((long double)ts_end.tv_sec*1000000 + (long double)ts_end.tv_nsec/1000.0) - ((long double)ts_start.tv_sec*1000000 + (long double)ts_start.tv_nsec/1000.0);
-            std::clog << "APPROX-VC-1,Job_num," << job_number << "," 
-                      << "time(us)," << elapsed_time_us << std::endl;
+
+            // output result to terminal if LOG_EN option
+            if (LOG_EN) {
+                std::clog << "APPROX-VC-1,Job_num," << job_number << "," 
+                          << "time_us," << elapsed_time_us << std::endl;
+            }
+            
+            // write to file
+            if (OUT_TO_FILE) {
+                std::string file_name = std::to_string(RUN_NUM) + "_APPROX-VC-1.csv";
+                outfile.open(file_name, std::ios_base::app);
+                if (write_header) {
+                    outfile << "job_number,elapsed_time_us" << std::endl; 
+                    write_header = false;
+                }
+                outfile << job_number << "," << elapsed_time_us << std::endl;
+            }
 
             //write result to result queue, use mutex for thread safety
             pthread_mutex_lock (&result_queue2_mutex);
@@ -317,7 +351,9 @@ void* calc_approx_vc_2(void* args) {
         
     clockid_t clock_id;
     int job_number = 1;
+    bool write_header = true;
     bool exit_flag = false;
+    std::ofstream outfile;
     
     while (true) {
         struct job* retrieved_job = NULL;
@@ -337,13 +373,27 @@ void* calc_approx_vc_2(void* args) {
             // compute result
             result = "APPROX-VC-2: " + approx_vc_2(retrieved_job->vertices, retrieved_job->edges);
 
-            //time end
+            // time end
             struct timespec ts_end;
             clock_gettime(clock_id, &ts_end);
             long double elapsed_time_us = ((long double)ts_end.tv_sec*1000000 + (long double)ts_end.tv_nsec/1000.0) - ((long double)ts_start.tv_sec*1000000 + (long double)ts_start.tv_nsec/1000.0);
-            std::clog << "APPROX-VC-2,Job_num," << job_number << "," 
-                      << "time(us)," << elapsed_time_us << std::endl;
+            
+            // output result to terminal if LOG_EN option
+            if (LOG_EN) {
+                std::clog << "APPROX-VC-2,Job_num," << job_number << "," 
+                          << "time_us," << elapsed_time_us << std::endl;
+            }
 
+            // write to file if option selected
+            if (OUT_TO_FILE) {
+                std::string file_name = std::to_string(RUN_NUM) + "_APPROX-VC-2.csv";
+                outfile.open(file_name, std::ios_base::app);
+                if (write_header) {
+                    outfile << "job_number,elapsed_time_us" << std::endl; 
+                    write_header = false;
+                }
+                outfile << job_number << "," << elapsed_time_us << std::endl;
+            }
 
             //write result to result queue, use mutex for thread safety
             pthread_mutex_lock (&result_queue3_mutex);
@@ -369,8 +419,36 @@ void* calc_approx_vc_2(void* args) {
 }
 
 
-int main() {
-    
+int main(int argc, char **argv) {
+    opterr = 0;
+    std::string tmp;
+    bool ignore_sat = false;
+    int c;
+
+    // expected options are '-o' [out to file], '-r value' [run num to name file], '-i' [ignore cnfsat]
+    while ((c = getopt (argc, argv, "or:il?")) != -1)
+        switch (c)
+        {
+        case 'o':
+            OUT_TO_FILE = true;
+            break;
+        case 'r':
+            RUN_NUM = atoi(tmp.c_str());
+            break;
+        case 'i':
+            ignore_sat = true;
+            break;    
+        case 'l':
+            LOG_EN = true;
+            break;     
+        case '?':
+            std::cerr << "Error: unknown option: " << optopt << std::endl;
+            return 1;
+        default:
+            return 0;
+        }
+    // std::cout << "r=" << RUN_NUM << "o=" << OUT_TO_FILE << "i=" << ignore_sat << "l=" << LOG_EN << std::endl;
+
     pthread_t IO_thread;
     pthread_t out_thread;
     pthread_t cnf_sat_thread;
@@ -380,14 +458,16 @@ int main() {
 
     pthread_create (&IO_thread, NULL, &IO_handler, (void *) finished_flags);
     pthread_create (&out_thread, NULL, &output_handler, (void *) finished_flags);
-    pthread_create (&cnf_sat_thread, NULL, &calc_cnf_sat_vc, (void *) finished_flags);
+    if (!ignore_sat) {
+        pthread_create (&cnf_sat_thread, NULL, &calc_cnf_sat_vc, (void *) finished_flags); }
     pthread_create (&approx_vc1_thread, NULL, &calc_aprox_vc_1, (void *) finished_flags);
     pthread_create (&approx_vc2_thread, NULL, &calc_approx_vc_2, (void *) finished_flags);
 
     pthread_join (IO_thread, NULL);
     finished_flags[0] = true; // flag indicates that EOF was seen at input, signal all threads to finish work and return
 
-    pthread_join (cnf_sat_thread, NULL);
+    if (!ignore_sat) {
+        pthread_join (cnf_sat_thread, NULL); }
     pthread_join (approx_vc1_thread, NULL);
     pthread_join (approx_vc2_thread, NULL);
     finished_flags[1] = true; // flag indicates all jobs processed, signal output writer to finish print results and return
