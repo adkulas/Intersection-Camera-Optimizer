@@ -212,6 +212,8 @@ void* calc_cnf_sat_vc(void* args) {
     bool write_header = true;
     bool exit_flag = false;
     std::ofstream outfile;
+    std::string file_name = std::to_string(RUN_NUM) + "_CNF-SAT-VC.csv";
+    outfile.open(file_name, std::ios_base::app);
 
     while (true) {
         struct job* retrieved_job = NULL;
@@ -244,8 +246,6 @@ void* calc_cnf_sat_vc(void* args) {
             
             // write to file
             if (OUT_TO_FILE) {
-                std::string file_name = std::to_string(RUN_NUM) + "_CNF-SAT-VC.csv";
-                outfile.open(file_name, std::ios_base::app);
                 if (write_header) {
                     outfile << "job_number,elapsed_time_us" << std::endl; 
                     write_header = false;
@@ -283,6 +283,8 @@ void* calc_aprox_vc_1(void* args) {
     bool write_header = true;
     bool exit_flag = false;
     std::ofstream outfile;
+    std::string file_name = std::to_string(RUN_NUM) + "_APPROX-VC-1.csv";
+    outfile.open(file_name, std::ios_base::app);
     
     while (true) {
         struct job* retrieved_job = NULL;
@@ -315,8 +317,6 @@ void* calc_aprox_vc_1(void* args) {
             
             // write to file
             if (OUT_TO_FILE) {
-                std::string file_name = std::to_string(RUN_NUM) + "_APPROX-VC-1.csv";
-                outfile.open(file_name, std::ios_base::app);
                 if (write_header) {
                     outfile << "job_number,elapsed_time_us" << std::endl; 
                     write_header = false;
@@ -354,6 +354,8 @@ void* calc_approx_vc_2(void* args) {
     bool write_header = true;
     bool exit_flag = false;
     std::ofstream outfile;
+    std::string file_name = std::to_string(RUN_NUM) + "_APPROX-VC-2.csv";
+    outfile.open(file_name, std::ios_base::app);
     
     while (true) {
         struct job* retrieved_job = NULL;
@@ -386,8 +388,6 @@ void* calc_approx_vc_2(void* args) {
 
             // write to file if option selected
             if (OUT_TO_FILE) {
-                std::string file_name = std::to_string(RUN_NUM) + "_APPROX-VC-2.csv";
-                outfile.open(file_name, std::ios_base::app);
                 if (write_header) {
                     outfile << "job_number,elapsed_time_us" << std::endl; 
                     write_header = false;
@@ -433,6 +433,7 @@ int main(int argc, char **argv) {
             OUT_TO_FILE = true;
             break;
         case 'r':
+            tmp = optarg;
             RUN_NUM = atoi(tmp.c_str());
             break;
         case 'i':
@@ -447,7 +448,7 @@ int main(int argc, char **argv) {
         default:
             return 0;
         }
-    // std::cout << "r=" << RUN_NUM << "o=" << OUT_TO_FILE << "i=" << ignore_sat << "l=" << LOG_EN << std::endl;
+    std::cout << "r=" << RUN_NUM << "o=" << OUT_TO_FILE << "i=" << ignore_sat << "l=" << LOG_EN << std::endl;
 
     pthread_t IO_thread;
     pthread_t out_thread;
