@@ -25,7 +25,7 @@ cd build && cat ../inputs/inputs.in | ./prj-ece650 2> log.log
 
 Flags for Operation:
 - -o [write performance time results to file]
-- -r value [prepend number to filename to indicate run number]
+- -n value [prepend name to filename]
 - -i [this flag bypasses the sat solver if trying inputs of large v]
 - -l [enables write results to std::clog]
 
