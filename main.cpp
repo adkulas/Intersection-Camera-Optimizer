@@ -23,7 +23,7 @@
 #define handle_error_en(en, msg) \
         do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
 
-int RUN_NUM = 0;
+std::string NAME = "0";
 bool OUT_TO_FILE = false;
 bool LOG_EN = false;
 
@@ -209,10 +209,10 @@ void* calc_cnf_sat_vc(void* args) {
     
     clockid_t clock_id;
     int job_number = 1;
-    bool write_header = true;
+    bool first = true;
     bool exit_flag = false;
     std::ofstream outfile;
-    std::string file_name = std::to_string(RUN_NUM) + "_CNF-SAT-VC.csv";
+    std::string file_name = NAME + "_CNF-SAT-VC.csv";
     outfile.open(file_name, std::ios_base::app);
 
     while (true) {
@@ -246,11 +246,11 @@ void* calc_cnf_sat_vc(void* args) {
             
             // write to file
             if (OUT_TO_FILE) {
-                if (write_header) {
-                    outfile << "job_number,elapsed_time_us" << std::endl; 
-                    write_header = false;
+                if (first) {
+                    outfile << elapsed_time_us;
+                    first = false;
                 }
-                outfile << job_number << "," << elapsed_time_us << std::endl;
+                outfile << "," << elapsed_time_us;
             }
 
             //write result to result queue, use mutex for thread safety
@@ -264,6 +264,7 @@ void* calc_cnf_sat_vc(void* args) {
         // exit loop when IO_handler see EOF (flag is set in int main after thread joins)
         if(*(bool*)args && job_queue1.empty()) {
             exit_flag = true;
+            outfile << std::endl;
         }
         pthread_mutex_unlock (&job_queue1_mutex);
 
@@ -280,10 +281,10 @@ void* calc_aprox_vc_1(void* args) {
         
     clockid_t clock_id;
     int job_number = 1;
-    bool write_header = true;
+    bool first = true;
     bool exit_flag = false;
     std::ofstream outfile;
-    std::string file_name = std::to_string(RUN_NUM) + "_APPROX-VC-1.csv";
+    std::string file_name = NAME + "_APPROX-VC-1.csv";
     outfile.open(file_name, std::ios_base::app);
     
     while (true) {
@@ -317,11 +318,11 @@ void* calc_aprox_vc_1(void* args) {
             
             // write to file
             if (OUT_TO_FILE) {
-                if (write_header) {
-                    outfile << "job_number,elapsed_time_us" << std::endl; 
-                    write_header = false;
+                if (first) {
+                    outfile << elapsed_time_us;
+                    first = false;
                 }
-                outfile << job_number << "," << elapsed_time_us << std::endl;
+                outfile << "," << elapsed_time_us;
             }
 
             //write result to result queue, use mutex for thread safety
@@ -334,6 +335,7 @@ void* calc_aprox_vc_1(void* args) {
         // exit loop when IO_handler see EOF (flag is set in int main after thread joins)
         if(*(bool*)args && job_queue2.empty()) {
             exit_flag = true;
+            outfile << std::endl;
         }
         pthread_mutex_unlock (&job_queue2_mutex);
 
@@ -354,7 +356,7 @@ void* calc_approx_vc_2(void* args) {
     bool write_header = true;
     bool exit_flag = false;
     std::ofstream outfile;
-    std::string file_name = std::to_string(RUN_NUM) + "_APPROX-VC-2.csv";
+    std::string file_name = NAME + "_APPROX-VC-2.csv";
     outfile.open(file_name, std::ios_base::app);
     
     while (true) {
@@ -406,6 +408,7 @@ void* calc_approx_vc_2(void* args) {
         // exit loop when IO_handler see EOF (flag is set in int main after thread joins)
         if(*(bool*)args && job_queue3.empty()) {
             exit_flag = true;
+            outfile << std::endl;
         }
 
         pthread_mutex_unlock (&job_queue3_mutex);
@@ -425,16 +428,15 @@ int main(int argc, char **argv) {
     bool ignore_sat = false;
     int c;
 
-    // expected options are '-o' [out to file], '-r value' [run num to name file], '-i' [ignore cnfsat]
-    while ((c = getopt (argc, argv, "or:il?")) != -1)
+    // expected options are '-o' [out to file], '-n value' [name to prepend filename], '-i' [ignore cnfsat]
+    while ((c = getopt (argc, argv, "on:il?")) != -1)
         switch (c)
         {
         case 'o':
             OUT_TO_FILE = true;
             break;
-        case 'r':
-            tmp = optarg;
-            RUN_NUM = atoi(tmp.c_str());
+        case 'n':
+            NAME = optarg;
             break;
         case 'i':
             ignore_sat = true;
@@ -448,7 +450,7 @@ int main(int argc, char **argv) {
         default:
             return 0;
         }
-    std::cout << "r=" << RUN_NUM << "o=" << OUT_TO_FILE << "i=" << ignore_sat << "l=" << LOG_EN << std::endl;
+    // std::cout << "r=" << NAME << "o=" << OUT_TO_FILE << "i=" << ignore_sat << "l=" << LOG_EN << std::endl;
 
     pthread_t IO_thread;
     pthread_t out_thread;
