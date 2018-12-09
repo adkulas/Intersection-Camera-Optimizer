@@ -251,7 +251,9 @@ void* calc_cnf_sat_vc(void* args) {
                     outfile << elapsed_time_us;
                     first = false;
                 }
-                outfile << "," << elapsed_time_us;
+                else {
+                    outfile << "," << elapsed_time_us;
+                }
             }
 
             //write result to result queue, use mutex for thread safety
@@ -323,7 +325,9 @@ void* calc_aprox_vc_1(void* args) {
                     outfile << elapsed_time_us;
                     first = false;
                 }
-                outfile << "," << elapsed_time_us;
+                else {
+                    outfile << "," << elapsed_time_us;
+                }
             }
 
             //write result to result queue, use mutex for thread safety
@@ -395,7 +399,9 @@ void* calc_approx_vc_2(void* args) {
                     outfile << elapsed_time_us;
                     first = false;
                 }
-                outfile << "," << elapsed_time_us;
+                else {
+                    outfile << "," << elapsed_time_us;
+                }
             }
 
             //write result to result queue, use mutex for thread safety

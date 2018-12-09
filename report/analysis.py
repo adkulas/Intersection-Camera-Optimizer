@@ -16,7 +16,7 @@ computed_sizes = defaultdict(list)
 
 # Get the size of the results from the 5-10-15 graphs
 
-path = os.path.join('data', '5-10-15_results.txt')
+path = os.path.join('data', 'ALL_results.txt')
 with open(path, 'r') as f:
     for line in f:
         algo, res = [x.strip() for x in line.split(':')]
@@ -55,6 +55,3 @@ plt.show()
 
 data = {'AC1': vc1_AR, 'AC2': vc2_AR, 'CNF': cnf_AR}
 df2 = pd.DataFrame(data=data)
-
-sns.barplot(df2, hue=df2.columns)
-plt.show()
