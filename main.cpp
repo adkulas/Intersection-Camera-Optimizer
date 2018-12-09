@@ -190,7 +190,8 @@ void* output_handler(void* args) {
             result_queue3.pop_front();
             std::cout << result << std::endl;
         }
-        if (*((bool*)args+1) && result_queue1.empty() && result_queue2.empty() && result_queue3.empty()) {
+        if ( (*((bool*)args+1) && result_queue1.empty() && result_queue2.empty() && result_queue3.empty())
+             || *((bool*)args+2) ) { // check if cnf_sat ignore flag was passed as argument
             exit_flag = true;
         }
 
@@ -213,7 +214,7 @@ void* calc_cnf_sat_vc(void* args) {
     bool exit_flag = false;
     std::ofstream outfile;
     std::string file_name = NAME + "_CNF-SAT-VC.csv";
-    outfile.open(file_name, std::ios_base::app);
+    if (OUT_TO_FILE) { outfile.open(file_name, std::ios_base::app); }
 
     while (true) {
         struct job* retrieved_job = NULL;
@@ -285,7 +286,7 @@ void* calc_aprox_vc_1(void* args) {
     bool exit_flag = false;
     std::ofstream outfile;
     std::string file_name = NAME + "_APPROX-VC-1.csv";
-    outfile.open(file_name, std::ios_base::app);
+    if (OUT_TO_FILE) { outfile.open(file_name, std::ios_base::app); }
     
     while (true) {
         struct job* retrieved_job = NULL;
@@ -353,11 +354,11 @@ void* calc_approx_vc_2(void* args) {
         
     clockid_t clock_id;
     int job_number = 1;
-    bool write_header = true;
+    bool first = true;
     bool exit_flag = false;
     std::ofstream outfile;
     std::string file_name = NAME + "_APPROX-VC-2.csv";
-    outfile.open(file_name, std::ios_base::app);
+    if (OUT_TO_FILE) { outfile.open(file_name, std::ios_base::app); }
     
     while (true) {
         struct job* retrieved_job = NULL;
@@ -390,11 +391,11 @@ void* calc_approx_vc_2(void* args) {
 
             // write to file if option selected
             if (OUT_TO_FILE) {
-                if (write_header) {
-                    outfile << "job_number,elapsed_time_us" << std::endl; 
-                    write_header = false;
+                if (first) {
+                    outfile << elapsed_time_us;
+                    first = false;
                 }
-                outfile << job_number << "," << elapsed_time_us << std::endl;
+                outfile << "," << elapsed_time_us;
             }
 
             //write result to result queue, use mutex for thread safety
@@ -423,6 +424,13 @@ void* calc_approx_vc_2(void* args) {
 
 
 int main(int argc, char **argv) {
+    pthread_t IO_thread;
+    pthread_t out_thread;
+    pthread_t cnf_sat_thread;
+    pthread_t approx_vc1_thread;
+    pthread_t approx_vc2_thread;
+    bool finished_flags[3] = {false};
+    
     opterr = 0;
     std::string tmp;
     bool ignore_sat = false;
@@ -440,6 +448,7 @@ int main(int argc, char **argv) {
             break;
         case 'i':
             ignore_sat = true;
+            finished_flags[2] = true;
             break;    
         case 'l':
             LOG_EN = true;
@@ -451,13 +460,6 @@ int main(int argc, char **argv) {
             return 0;
         }
     // std::cout << "r=" << NAME << "o=" << OUT_TO_FILE << "i=" << ignore_sat << "l=" << LOG_EN << std::endl;
-
-    pthread_t IO_thread;
-    pthread_t out_thread;
-    pthread_t cnf_sat_thread;
-    pthread_t approx_vc1_thread;
-    pthread_t approx_vc2_thread;
-    bool finished_flags[2] = {false};
 
     pthread_create (&IO_thread, NULL, &IO_handler, (void *) finished_flags);
     pthread_create (&out_thread, NULL, &output_handler, (void *) finished_flags);
@@ -474,7 +476,6 @@ int main(int argc, char **argv) {
     pthread_join (approx_vc1_thread, NULL);
     pthread_join (approx_vc2_thread, NULL);
     finished_flags[1] = true; // flag indicates all jobs processed, signal output writer to finish print results and return
-
     pthread_join (out_thread, NULL);
     return 0;
 }
