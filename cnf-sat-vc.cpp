@@ -121,9 +121,8 @@ bool VertexCover::solve(Minisat::Solver& solver, int k) {
     // init_variables();
     for (int r = 0; r < vertices; r++) {
         for (int c = 0; c < k; c++) {
-            auto var = solver.newVar();
-            // std::cout << "r: " << r << " c: " << c << " var: " << var << std::endl;
-        }
+            solver.newVar();
+            }
     }
 
     // add clauses
